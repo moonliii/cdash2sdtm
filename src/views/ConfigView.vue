@@ -22,17 +22,19 @@
     </el-form-item>
 
     <el-form-item label="SDTMIG" prop="sdtmig">
-      <el-select v-model="configData.sdtmig">
-        <el-option v-for="item in sdtmigList" :key="item.key" :label="item.value" :value="item.value">
-        </el-option>
-      </el-select>
+      <el-input v-model="configData.sdtmig"></el-input>
+    </el-form-item>
+
+    <el-form-item label="SDTM文件说明" prop="sdtmDescription">
+      <el-input v-model="configData.sdtmDescription"></el-input>
     </el-form-item>
 
     <el-form-item label="DefineXML" prop="defineXML">
-      <el-select v-model="configData.defineXML">
-        <el-option v-for="item in defineXMLList" :key="item.key" :label="item.value" :value="item.value">
-        </el-option>
-      </el-select>
+      <el-input v-model="configData.defineXML"></el-input>
+    </el-form-item>
+
+    <el-form-item label="DefineXML文件说明" prop="defineXMLDescription">
+      <el-input v-model="configData.defineXMLDescription"></el-input>
     </el-form-item>
 
     <el-form-item label="aCRF" prop="aCRF">
@@ -68,6 +70,10 @@
       <el-input v-model="configData.ctVersion"></el-input>
     </el-form-item>
 
+    <el-form-item label="受控术语文件说明" prop="ctDescription">
+      <el-input v-model="configData.ctDescription"></el-input>
+    </el-form-item>
+
   </el-form>
 </template>
 
@@ -83,27 +89,18 @@ export default {
         metadataName: '',
         metadataDescription: '',
         sdtmig: '',
+        sdtmDescription: '',
         defineXML: '',
+        defineXMLDescription: '',
         aCRF: '',
         filePurpose: '',
         fileVersion: '',
         fileDescription: '',
+        status: 0,
         dataset: '',
         ctVersion: '',
-        status: 0
+        ctDescription: ''
       },
-      sdtmigList: [
-        {
-          key: '1',
-          value: 'SDTM-IG 3.3'
-        }
-      ],
-      defineXMLList: [
-        {
-          key: '1',
-          value: 'DEFINE-XML 2.1'
-        }
-      ],
       // 上传的文件(展示)
       aCRFFileList: [],
       datasetFileList: [],
@@ -118,23 +115,17 @@ export default {
         researchName: [
           { required: true, message: '请输入研究名称', trigger: 'blur' }
         ],
-        sdtmig: [
-          { required: true, message: '请选择SDTMIG', trigger: 'blur' }
-        ],
+        // sdtmig: [
+        //   { required: true, message: '请填写SDTMIG', trigger: 'blur' }
+        // ],
         defineXML: [
-          { required: true, message: '请选择DefineXML', trigger: 'blur' }
+          { required: true, message: '请填写DefineXML', trigger: 'blur' }
         ],
         aCRF: [
           { required: true, message: '请上传aCRF', trigger: 'blur' }
         ],
         filePurpose: [
-          { required: true, message: '请选择文件目的', trigger: 'change' }
-        ],
-        fileVersion: [
-          { required: true, message: '请填写当前文件版本', trigger: 'change' }
-        ],
-        ctVersion: [
-          { required: true, message: '请填写受控术语版本', trigger: 'change' }
+          { required: true, message: '请填写文件目的', trigger: 'blur' }
         ],
         dataset: [
           { required: true, message: '请上传原始数据集', trigger: 'blur' }
@@ -162,20 +153,22 @@ export default {
     aCRFHttpRequest (param) {
       const fd = new FormData()
       const fileObj = param.file
+      this.aCRFFileList = []
       this.aCRFFileList.push({
         name: fileObj.name,
       })
-      fd.append('aCRF', fileObj)
+      fd.append('file', fileObj)
       this.fd = fd
     },
 
     datasetHttpRequest (param) {
       const fd = new FormData()
       const fileObj = param.file
+      this.datasetFileList = []
       this.datasetFileList.push({
         name: fileObj.name,
       })
-      fd.append('dataset', fileObj)
+      fd.append('file', fileObj)
       this.fd = fd
     },
 
@@ -187,33 +180,27 @@ export default {
       if (valid) {
         // aCRF文件手动上传
         that.$refs.aCRFUpload.submit()
-        await that.$api.config.uploadACRF(that.fd).then(res => {
-          // aCRF url
-          that.configData.aCRF = res.data
-        })
+        that.configData.aCRF = (await that.$api.config.upload(that.fd)).data
 
         // dataset文件手动上传
         that.$refs.datasetUpload.submit()
-        await that.$api.config.uploadDataset(that.fd).then(res => {
-          // console.log(res)
-          // dataset url
-          that.configData.dataset = res.data
-        })
+        that.configData.dataset = (await that.$api.config.uploadDataset(that.fd)).data
+
+        // 处理
+        that.configData.ctVersion = ''
+        that.configData.fileVersion = ''
+        sessionStorage.setItem("sdtmig", that.configData.sdtmig)
+        that.configData.sdtmig = ''
 
         // 提交表单
-        await that.$api.config.save(that.configData).then(res => {
-          // 保存表单数据
-          sessionStorage.setItem('configData', JSON.stringify(that.configData))
-          sessionStorage.setItem('aCRFFileList', JSON.stringify(that.aCRFFileList))
-          sessionStorage.setItem('datasetFileList', JSON.stringify(that.datasetFileList))
-          // console.log(res)
+        // 获取projectId
+        const projectId = (await that.$api.config.save(that.configData)).data.data
+        sessionStorage.setItem("projectId", projectId)
 
-          // 获取projectId
-          const projectId = res.data
-          sessionStorage.setItem("projectId", projectId)
-          // 后续用到的ctVersion
-          sessionStorage.setItem("ctVersion", this.ctVersion)
-        })
+        // 保存表单数据
+        // sessionStorage.setItem('configData', JSON.stringify(that.configData))
+        // sessionStorage.setItem('aCRFFileList', JSON.stringify(that.aCRFFileList))
+        // sessionStorage.setItem('datasetFileList', JSON.stringify(that.datasetFileList))
       } else {
         that.$message.error("请完整填写信息！")
       }
@@ -222,29 +209,27 @@ export default {
 
     initForm () {
       // default input
-      this.configData.researchName = '研究目的'
-      this.configData.sdtmig = 'SDTM-IG 3.3'
-      this.configData.defineXML = 'DEFINE-XML 2.1'
       this.configData.filePurpose = '递交'
     },
 
-    restoreForm () {
-      const configData = sessionStorage.getItem('configData')
-      const aCRFFileList = sessionStorage.getItem('aCRFFileList')
-      const datasetFileList = sessionStorage.getItem('datasetFileList')
-      if (configData && aCRFFileList && datasetFileList) {
-        this.configData = JSON.parse(configData)
-        this.aCRFFileList = JSON.parse(aCRFFileList)
-        this.datasetFileList = JSON.parse(datasetFileList)
-      } else {
-        this.initForm()
-      }
-    }
+    // restoreForm () {
+    //   const configData = sessionStorage.getItem('configData')
+    //   // upload中的param.file也需要恢复
+    //   const aCRFFileList = sessionStorage.getItem('aCRFFileList')
+    //   const datasetFileList = sessionStorage.getItem('datasetFileList')
+    //   if (configData && aCRFFileList && datasetFileList) {
+    //     this.configData = JSON.parse(configData)
+    //     this.aCRFFileList = JSON.parse(aCRFFileList)
+    //     this.datasetFileList = JSON.parse(datasetFileList)
+    //   } else {
+    //     this.initForm()
+    //   }
+    // }
   },
 
   created () {
-    // console.log('created')
-    this.restoreForm()
+    console.log('created')
+    // this.restoreForm()
   }
 }
 </script>

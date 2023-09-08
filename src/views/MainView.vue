@@ -41,16 +41,16 @@ export default {
           title: '设计数据集变量',
           description: '设计每个域内的相关数据集和变量属性'
         },
-        // {
-        //   title: '说明变量衍生方法',
-        //   description: '说明衍生变量的计算方法、代码片段'
-        // }
+        {
+          title: '生成Define.xml',
+          description: ''
+        }
       ],
       routesList: [
         '/config',
         '/confirmDomain',
         '/varSetting',
-        '/xx'
+        '/define'
       ]
     }
   },
@@ -107,17 +107,18 @@ export default {
     },
     //监听路径的改变来让步骤条改变
     init () {
-      // console.log(this.$route.path, '路径')
-      // if (this.$route.path == '/ceshi/stepcontent4') {
-      //   this.active = 3
-      //   this.stepSuccess = [0, 1, 2, 3]
-      // } else {
-      //   console.log("错误")
-      // }
+      for (let idx in this.routesList) {
+        if (this.$route.path == this.routesList[idx]) {
+          this.active = Number(idx)
+          for (let i = 0; i < idx; i++) {
+            this.stepSuccess.add(i)
+          }
+        }
+      }
     }
   },
   mounted () {
-    // this.init()
+    this.init()
   }
 }
 </script>

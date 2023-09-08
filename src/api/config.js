@@ -1,8 +1,8 @@
 import axios from '@/utils/request'
 
 const config = {
-  // 上传aCRF文件
-  uploadACRF: (data) => axios({
+  // 上传文件
+  upload: (data) => axios({
     url: '/config/upload',
     method: 'post',
     data,

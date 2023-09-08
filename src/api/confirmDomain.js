@@ -21,6 +21,13 @@ const confirmDomain = {
     method: 'post',
     data
   }),
+
+  // 保存并继续
+  save: (data) => axios({
+    url: '/confirmDomain/save',
+    method: 'post',
+    data
+  }),
 }
 
 export default confirmDomain

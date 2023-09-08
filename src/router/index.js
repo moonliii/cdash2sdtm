@@ -4,6 +4,7 @@ import MainView from '../views/MainView.vue'
 import ConfigView from '../views/ConfigView.vue'
 import ConfirmDomainView from '../views/ConfirmDomainView.vue'
 import VarSettingView from '../views/VarSettingView'
+import DefineView from '../views/DefineView'
 
 Vue.use(VueRouter)
 
@@ -28,7 +29,13 @@ const routes = [
         path: '/varSetting',
         name: 'varSetting',
         component: VarSettingView
-      }]
+      },
+      {
+        path: '/define',
+        name: 'define',
+        component: DefineView
+      }
+    ]
   }
 ]
 
