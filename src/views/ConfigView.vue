@@ -109,8 +109,11 @@ export default {
         "content-type": "multipart/form-data"
       },
       //用于放文件数据  FormData类型
-      fd: {},
+      acrfFormData: undefined,
+      datasetFormData: undefined,
       // 校验规则
+      isAddAcrf: false,
+      isAddDataset: false,
       rules: {
         researchName: [
           { required: true, message: '请输入研究名称', trigger: 'blur' }
@@ -121,15 +124,15 @@ export default {
         defineXML: [
           { required: true, message: '请填写DefineXML', trigger: 'blur' }
         ],
-        aCRF: [
-          { required: true, message: '请上传aCRF', trigger: 'blur' }
-        ],
+        // aCRF: [
+        //   { required: true, message: '请上传aCRF', trigger: 'blur' }
+        // ],
         filePurpose: [
           { required: true, message: '请填写文件目的', trigger: 'blur' }
         ],
-        dataset: [
-          { required: true, message: '请上传原始数据集', trigger: 'blur' }
-        ],
+        // dataset: [
+        //   { required: true, message: '请上传原始数据集', trigger: 'blur' }
+        // ],
       }
     }
   },
@@ -137,54 +140,77 @@ export default {
 
     // 添加文件时，控制文件类型(aCRF必须是pdf)
     aCRFAdd (file) {
+      // console.log('on change')
       const extension = file.name.substring(file.name.lastIndexOf('.') + 1)
       if (extension !== 'pdf') {
         this.$message.warning('文件必须为.pdf类型')
       }
-      // 表示已经上传（rule判断）
-      this.configData.aCRF = '#'
+      this.isAddAcrf = true
     },
 
     datasetAdd () {
-      // 表示已经上传（rule判断）
-      this.configData.dataset = '#'
+      this.isAddDataset = true
     },
 
     aCRFHttpRequest (param) {
-      const fd = new FormData()
       const fileObj = param.file
-      this.aCRFFileList = []
-      this.aCRFFileList.push({
-        name: fileObj.name,
-      })
-      fd.append('file', fileObj)
-      this.fd = fd
+      if (fileObj) {
+        const fd = new FormData()
+        if (this.aCRFFileList.length != 0) {
+          this.aCRFFileList = []
+        }
+        this.aCRFFileList.push({
+          name: fileObj.name,
+        })
+        fd.append('file', fileObj)
+        this.acrfFormData = fd
+      }
     },
 
     datasetHttpRequest (param) {
-      const fd = new FormData()
       const fileObj = param.file
-      this.datasetFileList = []
-      this.datasetFileList.push({
-        name: fileObj.name,
-      })
-      fd.append('file', fileObj)
-      this.fd = fd
+      if (fileObj) {
+        const fd = new FormData()
+        if (this.datasetFileList.length != 0) {
+          this.datasetFileList = []
+        }
+        this.datasetFileList.push({
+          name: fileObj.name,
+        })
+        fd.append('file', fileObj)
+        this.datasetFormData = fd
+      }
     },
 
 
     async submitForm () {
       let that = this
+      // 验证是否上传
+      if (!this.isAddAcrf) {
+        that.$message.error("请上传aCRF！")
+        return false
+      }
+      if (!this.isAddDataset) {
+        that.$message.error("请上传原始数据集！")
+        return false
+      }
       // validate
       const valid = await this.$refs.configData.validate().catch((err) => { return false })
       if (valid) {
+
         // aCRF文件手动上传
         that.$refs.aCRFUpload.submit()
-        that.configData.aCRF = (await that.$api.config.upload(that.fd)).data
+        // 上传文件没有改变，才调用接口
+        if (that.acrfFormData) {
+          that.configData.aCRF = (await that.$api.config.upload(that.acrfFormData)).data
+        }
 
         // dataset文件手动上传
         that.$refs.datasetUpload.submit()
-        that.configData.dataset = (await that.$api.config.uploadDataset(that.fd)).data
+        if (that.datasetFormData) {
+          that.configData.dataset = (await that.$api.config.uploadDataset(that.datasetFormData)).data
+        }
+        console.log(that.configData)
 
         // 处理
         that.configData.ctVersion = ''
@@ -198,9 +224,13 @@ export default {
         sessionStorage.setItem("projectId", projectId)
 
         // 保存表单数据
-        // sessionStorage.setItem('configData', JSON.stringify(that.configData))
-        // sessionStorage.setItem('aCRFFileList', JSON.stringify(that.aCRFFileList))
-        // sessionStorage.setItem('datasetFileList', JSON.stringify(that.datasetFileList))
+        sessionStorage.setItem('configData', JSON.stringify(that.configData))
+        sessionStorage.setItem('aCRFFileList', JSON.stringify(that.aCRFFileList))
+        sessionStorage.setItem('datasetFileList', JSON.stringify(that.datasetFileList))
+        sessionStorage.setItem('isAddAcrf', this.isAddAcrf)
+        sessionStorage.setItem('isAddDataset', this.isAddDataset)
+
+
       } else {
         that.$message.error("请完整填写信息！")
       }
@@ -212,24 +242,25 @@ export default {
       this.configData.filePurpose = '递交'
     },
 
-    // restoreForm () {
-    //   const configData = sessionStorage.getItem('configData')
-    //   // upload中的param.file也需要恢复
-    //   const aCRFFileList = sessionStorage.getItem('aCRFFileList')
-    //   const datasetFileList = sessionStorage.getItem('datasetFileList')
-    //   if (configData && aCRFFileList && datasetFileList) {
-    //     this.configData = JSON.parse(configData)
-    //     this.aCRFFileList = JSON.parse(aCRFFileList)
-    //     this.datasetFileList = JSON.parse(datasetFileList)
-    //   } else {
-    //     this.initForm()
-    //   }
-    // }
+    restoreForm () {
+      const configData = sessionStorage.getItem('configData')
+      const aCRFFileList = sessionStorage.getItem('aCRFFileList')
+      const datasetFileList = sessionStorage.getItem('datasetFileList')
+      this.isAddAcrf = sessionStorage.getItem('isAddAcrf')
+      this.isAddDataset = sessionStorage.getItem('isAddDataset')
+      if (configData && aCRFFileList && datasetFileList) {
+        this.configData = JSON.parse(configData)
+        this.aCRFFileList = JSON.parse(aCRFFileList)
+        this.datasetFileList = JSON.parse(datasetFileList)
+      } else {
+        this.initForm()
+      }
+    }
   },
 
   created () {
     console.log('created')
-    // this.restoreForm()
+    this.restoreForm()
   }
 }
 </script>

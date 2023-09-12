@@ -95,14 +95,15 @@ export default {
     },
     // 观测类别
     observationClassList () {
-      return this.domainInfoSuggestedList.map(x => x.observationClass)
+      const arr = this.domainInfoSuggestedList.map(x => x.observationClass)
+      return Array.from(new Set(arr))
     },
-    // 启用的domain
-    domainOnInfoList () {
-      return this.domainInfoSuggestedList.filter(x => {
-        return x.status == true
-      })
-    },
+    // // 启用的domain
+    // domainOnInfoList () {
+    //   return this.domainInfoSuggestedList.filter(x => {
+    //     return x.status == true
+    //   })
+    // },
     appliedDomainCount () {
       return this.domainOnInfoList.length
     },

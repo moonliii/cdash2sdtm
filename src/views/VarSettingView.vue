@@ -12,7 +12,7 @@
     <el-container>
       <el-header>
         <!-- <span>{{ domain }}</span> -->
-        <el-popover ref="popoverRef" placement="bottom" width="400" trigger="click">
+        <el-popover ref="popoverRefStandard" placement="bottom" width="400" trigger="click">
           <div style="height:300px; overflow-y: scroll;">
             <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll"
               @change="handleCheckAllChange">全选</el-checkbox>
@@ -140,8 +140,8 @@
                         <el-table-column fixed prop="synonym_cn" label="同义词" width="80"></el-table-column>
                       </el-table>
                       <span>
-                        <el-button @click="saveDictStandardCt">保存</el-button>
-                        <el-button type="primary" @click="modifyDictDialogVisible = false">取消</el-button>
+                        <el-button type="primary" @click="saveDictStandardCt">保存</el-button>
+                        <el-button @click="modifyDictDialogVisible = false">取消</el-button>
                       </span>
                     </el-dialog>
                   </el-row>
@@ -149,6 +149,7 @@
                     <el-button @click.native="triggerCustomDict(scope.$index)" type="text">
                       新增自定义字典
                     </el-button>
+                    <span>{{ scope.row.ctCode }}</span>
                     <el-dialog title="选项字典设置" :visible.sync="customDictDialogVisible" width="50%" append-to-body>
                       <el-row>
                         <el-col :span="8">名称：<el-input label="dictName" v-model="dictName" /></el-col>
@@ -181,8 +182,8 @@
                       </el-table>
                       <span><el-button @click="addCustomCode">新增一条</el-button></span>
                       <span>
-                        <el-button @click="saveCustomDict">保存</el-button>
-                        <el-button type="primary" @click="customDictDialogVisible = false">取消</el-button>
+                        <el-button type="primary" @click="saveCustomDict">保存</el-button>
+                        <el-button @click="customDictDialogVisible = false">取消</el-button>
                       </span>
                     </el-dialog>
                   </el-row>
@@ -229,6 +230,11 @@
               </el-select>
             </template>
           </el-table-column>
+          <el-table-column label="填充方法" width="120">
+            <template slot-scope="scope">
+              <el-input v-if="!scope.row.isAddVlm && !scope.row.hasVLM" v-model="scope.row.method"></el-input>
+            </template>
+          </el-table-column>
           <el-table-column label="aCRF页码" width="120">
             <template slot-scope="scope">
               <el-input v-if="!scope.row.isAddVlm && !scope.row.hasVLM" v-model="scope.row.acrfPage"></el-input>
@@ -273,6 +279,7 @@
             </template>
           </el-table-column>
         </el-table>
+        <el-button type="primary" @click="saveVarInfo">保存</el-button>
       </el-main>
     </el-container>
   </el-container>
@@ -363,10 +370,36 @@ export default {
       const res = await this.$api.varSetting.queryAllDomain(param)
       this.domainList = res.data.data
     },
+    copyVarInfo (varSettingVo, showVar) {
+      for (let key in varSettingVo) {
+        varSettingVo[key] = showVar[key]
+      }
+    },
+    // 每次调用updateShowList都需先保存回VarInfoList
+    saveShowListToVarInfoList () {
+      for (let varInfo of this.varInfoList) {
+        const varSettingVo = varInfo.varSettingVo
+        for (let showVar of this.showList) {
+          if (varSettingVo.variable == showVar.variable) {
+            this.copyVarInfo(varSettingVo, showVar)
+          }
+        }
+        if (varInfo.varSettingVoList) {
+          for (let vlm of varInfo.varSettingVoList) {
+            for (let showVar of this.showList) {
+              if (vlm.variable == showVar.variable) {
+                this.copyVarInfo(vlm, showVar)
+              }
+            }
+          }
+        }
+      }
+    },
     updateShowList () {
       let showList = []
       // 处理值级元数据
       for (let d of this.varInfoList) {
+        // console.log(d)
         if (!d.varSettingVo.hasVLM) {
           // 没有值级元数据
           // 直接父变量
@@ -378,7 +411,7 @@ export default {
           // 不能直接用‘=’！，拷贝问题。
           // const vlmVarList = d.varSettingVoList ? d.varSettingVoList : []
 
-          // 应该把对象一个个拷贝过来
+          // 应该把对象属性一个个拷贝过来
           const vlmVarList = []
           if (d.varSettingVoList) {
             for (let tempVar of d.varSettingVoList) {
@@ -386,8 +419,9 @@ export default {
             }
           }
           // 新增一行“添加VLM”
-          const newVar = {
-            ...this.varInfoList[0].varSettingVo
+          const newVar = {}
+          for (let key in d.varSettingVo) {
+            newVar[key] = ''
           }
           newVar.isAddVlm = true
           vlmVarList.push(newVar)
@@ -441,8 +475,8 @@ export default {
       // 查询 表名 列表
       this.sheetNameList = (await this.$api.varSetting.querySheetName({ "domain": domain, "projectId": this.projectId })).data.data
 
-      console.log('in showVarInfo varInfoList', this.varInfoList)
-      console.log('in showVarInfo showList', this.showList)
+      // console.log('in showVarInfo varInfoList', this.varInfoList)
+      // console.log('in showVarInfo showList', this.showList)
     },
     async handleSheetNameChange (sheetName) {
       this.fieldList = (await this.$api.varSetting.queryField({ "sheetName": sheetName, "projectId": this.projectId })).data.data
@@ -475,6 +509,7 @@ export default {
       this.modifyDictDialogVisible = false
     },
     async triggerCustomDict (showIndex) {
+      this.showIndexInCustomDict = showIndex
       this.customCodeList = (await this.$api.varSetting.queryCustomCT({ dictName: this.dictName })).data.data
       this.customDictDialogVisible = true
     },
@@ -502,10 +537,12 @@ export default {
         }
       })
       this.$api.varSetting.saveCustomCT(this.customCodeList).catch(err => { })
+      this.showList[this.showIndexInCustomDict].ctCode = this.customCodeList.map(x => x.ctKey).join(',')
       this.customDictDialogVisible = false
     },
 
     deleteRow (showIndex) {
+      this.saveShowListToVarInfoList()
       // 主键variable
       const variable = this.showList[showIndex].variable
       const param = {
@@ -513,10 +550,10 @@ export default {
         "domain": this.domain,
         "variable": variable
       }
-      // 调用接口删除变量，若此时数据库还没有这个variable呢？
+      // 调用接口删除变量，
       this.$api.varSetting.deleteVar(param).catch(err => { console.log(err) })
       console.log('deleteRow', this.varInfoList)
-      // 根据主键variable查找到varInfoList中的变量，variable唯一且不为空》
+      // 根据主键variable查找到varInfoList中的变量，variable唯一且不为空
       for (let varIndex in this.varInfoList) {
         if (this.varInfoList[varIndex].varSettingVo.variable == variable) {
           // 删父元素，会把vlm一起删掉
@@ -559,6 +596,7 @@ export default {
       this.isIndeterminate = checkedCount > 0 && checkedCount < this.standardVarList.length;
     },
     async confirmAddStandardVar () {
+      this.saveShowListToVarInfoList()
       // 查询要添加的标准变量的信息
       const param = {
         "projectId": this.projectId,
@@ -578,10 +616,10 @@ export default {
         this.varInfoList.push(varInfo)
       }
       this.updateShowList()
-      this.$refs.popoverRef.doClose()
+      this.$refs.popoverRefStandard.doClose()
     },
     cancelAddStandardVar () {
-      this.$refs.popoverRef.doClose()
+      this.$refs.popoverRefStandard.doClose()
     },
     // 新增自定义变量
     addCustomVar () {
@@ -605,6 +643,7 @@ export default {
     },
     // 确认新增 一行自定义变量
     handleConfirmAddCustom (showIndex) {
+      this.saveShowListToVarInfoList()
       // 主键variable确定
       this.showList[showIndex].isEditCustom = false
       // 新增的自定义变量 加到varInfoList
@@ -663,6 +702,7 @@ export default {
     },
     // 确认新增 一行vlm
     handleConfirmAddVlm (showIndex) {
+      this.saveShowListToVarInfoList()
 
       // 主键variable确定
       this.showList[showIndex].isEditVlm = false
@@ -684,20 +724,26 @@ export default {
     handleCancelAdd (showIndex) {
       this.showList.splice(showIndex, 1)
     },
-    copyVarInfo (varSettingVo, showVar) {
-      for (let key in varSettingVo) {
-        varSettingVo[key] = showVar[key]
-      }
-
+    changeDataTypeToUpload (varSettingVo, showVar) {
       delete varSettingVo.hasVLM
-      varSettingVo.hasVLM = showVar.hasVLM ? 0 : 1
+      varSettingVo.hasVLM = showVar.hasVLM ? 1 : 0
       delete varSettingVo.isKeyVar
-      varSettingVo.isKeyVar = showVar.isKeyVar ? 0 : 1
+      varSettingVo.isKeyVar = showVar.isKeyVar ? 1 : 0
       delete varSettingVo.isEditCustom
       delete varSettingVo.isEditVlm
       delete varSettingVo.isAddVlm
-
     },
+    // 恢复展示时需要的数据类型(bool)
+    changeDataTypeToShow (varSettingVo, showVar) {
+      // hasVLM
+      varSettingVo.hasVLM = showVar.hasVLM == 1 ? true : false
+      // isKeyVar
+      varSettingVo.isKeyVar = showVar.isKeyVar == 1 ? true : false
+      varSettingVo.isAddVlm = showVar.isAddVlm
+      varSettingVo.isEditVlm = showVar.isEditVlm
+      varSettingVo.isEditCustom = showVar.isEditCustom
+    },
+
     // 上传前，将前端页面showList做的字段修改，对应回varInfoList
     updateVarInfoListBeforeSave () {
       for (let varInfo of this.varInfoList) {
@@ -705,6 +751,7 @@ export default {
         for (let showVar of this.showList) {
           if (varSettingVo.variable == showVar.variable) {
             this.copyVarInfo(varSettingVo, showVar)
+            this.changeDataTypeToUpload(varSettingVo, showVar)
           }
         }
         if (varInfo.varSettingVoList) {
@@ -712,6 +759,27 @@ export default {
             for (let showVar of this.showList) {
               if (vlm.variable == showVar.variable) {
                 this.copyVarInfo(vlm, showVar)
+                this.changeDataTypeToUpload(vlm, showVar)
+              }
+            }
+          }
+        }
+      }
+    },
+    // 上传完vlm之后，要把数据类型恢复成展示所需的
+    updateVarInfoListAfterSave () {
+      for (let varInfo of this.varInfoList) {
+        const varSettingVo = varInfo.varSettingVo
+        for (let showVar of this.showList) {
+          if (varSettingVo.variable == showVar.variable) {
+            this.changeDataTypeToShow(varSettingVo, showVar)
+          }
+        }
+        if (varInfo.varSettingVoList) {
+          for (let vlm of varInfo.varSettingVoList) {
+            for (let showVar of this.showList) {
+              if (vlm.variable == showVar.variable) {
+                this.changeDataTypeToShow(vlm, showVar)
               }
             }
           }
@@ -720,13 +788,11 @@ export default {
     },
     // 设置vlm-list，调用接口
     finishAddVlm (showIndex) {
-      console.log('finishAddVlm')
       this.updateVarInfoListBeforeSave()
       // 根据上一行找到父变量
       let tempFatherVariable
       let tempVarSettingVoList
       const tempVar = this.showList[showIndex - 1].variable
-      console.log('finish last var', tempVar)
       for (let varInfo of this.varInfoList) {
         if (varInfo.varSettingVo.variable == tempVar) {
           // 前一行，是它的父变量
@@ -755,21 +821,17 @@ export default {
       console.log(param)
       let that = this
       this.$api.varSetting.setVlm(param).then(res => {
-        that.showVarInfo(that.domainList[0])
+        that.updateVarInfoListAfterSave()
       }).catch(err => { })
 
 
     },
 
     handleChangeHasVlm (showIndex) {
-      // // 关联的varInfoList中的这一行 也要修改
-      // const tempVar = this.showList[showIndex].variable
-      // for (let varInfo of this.varInfoList) {
-      //   if (varInfo.varSettingVo.variable == tempVar) {
-      //     varInfo.varSettingVo.hasVLM = this.showList[showIndex].hasVLM
-      //   }
-      // }
-      // this.updateShowList()
+
+      this.saveShowListToVarInfoList()
+      this.updateShowList()
+
 
     },
     annexHttpRequest (param) {
@@ -794,12 +856,16 @@ export default {
 
     },
 
-
-    // 保存并继续
-    submitForm () {
+    // 每个域都有个保存按钮，调用save接口
+    saveVarInfo () {
       this.updateVarInfoListBeforeSave()
       const fatherVarInfoList = this.varInfoList.map(x => x.varSettingVo)
       this.$api.varSetting.save(fatherVarInfoList).catch(err => { })
+    },
+
+    // 继续
+    submitForm () {
+
       return true
     }
   },
