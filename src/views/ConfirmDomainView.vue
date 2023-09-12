@@ -126,7 +126,7 @@ export default {
       }
       //queryAll
       let res = await this.$api.confirmDomain.queryAllDomain(param)
-      // console.log(res)
+      console.log(res)
       this.domainAllList = res.data.data.domainAllList
       // 启用
       this.domainInfoSuggestedList = res.data.data.domainInfoVoList.map(x => {

@@ -95,6 +95,7 @@ export default {
     },
     // 组件点击下一步
     async handleNextStep () {
+      console.log(this.$route.path)
       // console.log(this.active, '下一步')
       const valid = await this.$refs.editSteps.submitForm()
       if (valid) {

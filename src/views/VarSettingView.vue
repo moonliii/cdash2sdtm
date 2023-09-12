@@ -124,11 +124,11 @@
                     </el-button>
                     <span>{{ scope.row.ctCode }}</span>
                     <el-dialog title="选项字典设置" :visible.sync="modifyDictDialogVisible" width="50%" append-to-body>
-                      <!-- <el-row>
-                      <el-col :span="8">名称：<el-input label="" /></el-col>
-                      <el-col :span="8">类型：<el-input label="" /></el-col>
-                      <el-col :span="8">语种：<el-input label="" /></el-col>
-                    </el-row> -->
+                      <el-row>
+                        <el-col :span="8">名称：<el-input label="dictName" v-model="scope.row.ctName" /></el-col>
+                        <el-col :span="8">类型：<el-input label="type" v-model="type" /></el-col>
+                        <el-col :span="8">语种：<el-input label="language" v-model="language" /></el-col>
+                      </el-row>
                       <el-table :data="tmpCodeList">
                         <el-table-column label="启用" width="80">
                           <template slot-scope="codeListScope">
@@ -152,7 +152,7 @@
                     <span>{{ scope.row.ctCode }}</span>
                     <el-dialog title="选项字典设置" :visible.sync="customDictDialogVisible" width="50%" append-to-body>
                       <el-row>
-                        <el-col :span="8">名称：<el-input label="dictName" v-model="dictName" /></el-col>
+                        <el-col :span="8">名称：<el-input label="dictName" v-model="scope.row.ctName" /></el-col>
                         <el-col :span="8">类型：<el-input label="type" v-model="type" /></el-col>
                         <el-col :span="8">语种：<el-input label="language" v-model="language" /></el-col>
                       </el-row>
@@ -174,7 +174,8 @@
                         </el-table-column>
                         <el-table-column label="操作" width="80">
                           <template slot-scope="codeListScope">
-                            <el-button @click.native.prevent="deleteCustomCode(codeListScope.$index)" type="text">
+                            <el-button @click.native.prevent="deleteCustomCode(scope.row.ctName, codeListScope.$index)"
+                              type="text">
                               删除
                             </el-button>
                           </template>
@@ -182,15 +183,15 @@
                       </el-table>
                       <span><el-button @click="addCustomCode">新增一条</el-button></span>
                       <span>
-                        <el-button type="primary" @click="saveCustomDict">保存</el-button>
+                        <el-button type="primary" @click="saveCustomDict(scope.row.ctName)">保存</el-button>
                         <el-button @click="customDictDialogVisible = false">取消</el-button>
                       </span>
                     </el-dialog>
                   </el-row>
                   <el-row v-if="scope.row.ctType == '外部'">
-                    <el-input placeholder="术语名称" v-model="scope.row.ctCode" />
-                    <el-input placeholder="版本" />
-                    <el-input placeholder="链接" />
+                    <el-input placeholder="术语名称" v-model="scope.row.ctName" />
+                    <el-input placeholder="版本" v-model="scope.row.ctVersion" />
+                    <el-input placeholder="链接" v-model="scope.row.ctLink" />
                   </el-row>
                 </div>
               </div>
@@ -353,7 +354,7 @@ export default {
       // 自定义受控术语
       customDictDialogVisible: false,
       customCodeList: [],
-      dictName: '',
+      // dictName: '',
       type: '',
       language: ''
     }
@@ -440,7 +441,9 @@ export default {
       this.showList = showList
     },
     async showVarInfo (domain) {
-      domain = domain.split('/')[1]
+      if (domain.includes('/')) {
+        domain = domain.split('/')[1]
+      }
       this.domain = domain
 
       //varInfoList,和后端一样，{父变量，子变量列表}
@@ -510,7 +513,8 @@ export default {
     },
     async triggerCustomDict (showIndex) {
       this.showIndexInCustomDict = showIndex
-      this.customCodeList = (await this.$api.varSetting.queryCustomCT({ dictName: this.dictName })).data.data
+      const dictName = this.showList[showIndex].ctName
+      this.customCodeList = (await this.$api.varSetting.queryCustomCT({ dictName: dictName })).data.data
       this.customDictDialogVisible = true
     },
     addCustomCode () {
@@ -523,15 +527,15 @@ export default {
         number: ""
       })
     },
-    deleteCustomCode (index) {
-      this.$api.varSetting.deleteCustomCT({ dictName: this.dictName, key: this.customCodeList[index].ctKey }).catch(err => { })
+    deleteCustomCode (ctName, index) {
+      this.$api.varSetting.deleteCustomCT({ dictName: ctName, key: this.customCodeList[index].ctKey }).catch(err => { })
       this.customCodeList.splice(index, 1)
     },
-    saveCustomDict () {
+    saveCustomDict (ctName) {
       this.customCodeList = this.customCodeList.map(x => {
         return {
           ...x,
-          dictName: this.dictName,
+          dictName: ctName,
           type: this.type,
           language: this.language
         }
