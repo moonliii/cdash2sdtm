@@ -632,7 +632,8 @@ export default {
         newVar[key] = ''
       }
       newVar.projectId = this.projectId
-      newVar.domain = this.domain
+      // 自定义元素domain前加‘SUPP’
+      newVar.domain = 'SUPP' + this.domain
       newVar.coreDegree = '自定义'
       newVar.hasVLM = false
       newVar.isKeyVar = false
@@ -673,7 +674,8 @@ export default {
         newVar[key] = ''
       }
       newVar.projectId = this.projectId
-      newVar.domain = this.domain
+      // vlm的domain和父级元素domain一样
+      newVar.domain = this.showList[showIndex].domain
       newVar.hasVLM = false
       newVar.vlm = ''
       newVar.isKeyVar = false

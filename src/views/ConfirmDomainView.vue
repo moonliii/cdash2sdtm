@@ -38,11 +38,6 @@
       </el-table-column>
       <el-table-column prop="keyVariable" label="关键变量" width="180">
       </el-table-column>
-      <el-table-column label="目的" width="180">
-        <template slot-scope="scope">
-          <el-input v-model="scope.row.purpose"></el-input>
-        </template>
-      </el-table-column>
       <el-table-column label="文件描述" width="180">
         <template slot-scope="scope">
           <el-input v-model="scope.row.fileDescription"></el-input>
