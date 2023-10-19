@@ -48,6 +48,11 @@
           <el-input v-model="scope.row.fileAddress"></el-input>
         </template>
       </el-table-column>
+      <el-table-column label="有无数据(0/1)" width="180">
+        <template slot-scope="scope">
+          <el-input v-model="scope.row.hasData">1</el-input>
+        </template>
+      </el-table-column>
       <el-table-column fixed="right" label="删除域" width="180">
         <template slot-scope="scope">
           <el-button type="text" @click="deleteDomain(scope.row)">删除</el-button>

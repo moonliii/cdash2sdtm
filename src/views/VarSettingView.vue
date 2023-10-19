@@ -138,6 +138,22 @@
                         <el-table-column fixed prop="code" label="编码" width="80"></el-table-column>
                         <el-table-column fixed prop="value_cn" label="递交值" width="80"></el-table-column>
                         <el-table-column fixed prop="synonym_cn" label="同义词" width="80"></el-table-column>
+                        <el-table-column fixed prop="show_order" label="展示顺序" width="80"></el-table-column>
+                        <el-table-column label="应用名称" width="80">
+                          <template slot-scope="codeListScope">
+                            <el-input label="app_name" v-model="codeListScope.row.app_name" />
+                          </template>
+                        </el-table-column>
+                        <el-table-column label="数值含义" width="80">
+                          <template slot-scope="codeListScope">
+                            <el-input label="data_meaning" v-model="codeListScope.row.data_meaning" />
+                          </template>
+                        </el-table-column>
+                        <el-table-column label="展示顺序" width="80">
+                          <template slot-scope="codeListScope">
+                            <el-input label="show_order" v-model="codeListScope.row.show_order" />
+                          </template>
+                        </el-table-column>
                       </el-table>
                       <span>
                         <el-button type="primary" @click="saveDictStandardCt">保存</el-button>
@@ -162,7 +178,7 @@
                             <el-input label="ctKey" v-model="codeListScope.row.ctKey" />
                           </template>
                         </el-table-column>
-                        <el-table-column label="描述(展示查看的内容)" width="80">
+                        <el-table-column label="描述(展示查看的内容)" width="140">
                           <template slot-scope="codeListScope">
                             <el-input label="description" v-model="codeListScope.row.description" />
                           </template>
@@ -246,6 +262,11 @@
               <el-input v-if="!scope.row.isAddVlm && !scope.row.hasVLM" v-model="scope.row.varComment"></el-input>
             </template>
           </el-table-column>
+          <el-table-column label="有无数据(0/1)" width="180">
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.hasData">1</el-input>
+          </template>
+        </el-table-column>
           <!-- <el-table-column label="附件" width="120">
             <template slot-scope="scope">
               <el-upload :ref="'annexUpload' + scope.$index" :headers="headers" action="#"
@@ -508,7 +529,7 @@ export default {
       this.modifyDictDialogVisible = true
     },
     saveDictStandardCt () {
-      this.showList[this.showIndexInModifyDict].ctCode = this.tmpCodeList.filter(x => x.useFlag).map(x => x.code).join(',')
+      this.showList[this.showIndexInModifyDict].ctCode = this.tmpCodeList.filter(x => x.useFlag).map(x => (x.code+'-'+x.app_name+'-'+x.data_meaning)).join(',')
       this.modifyDictDialogVisible = false
     },
     async triggerCustomDict (showIndex) {
@@ -541,7 +562,7 @@ export default {
         }
       })
       this.$api.varSetting.saveCustomCT(this.customCodeList).catch(err => { })
-      this.showList[this.showIndexInCustomDict].ctCode = this.customCodeList.map(x => x.ctKey).join(',')
+      this.showList[this.showIndexInCustomDict].ctCode = this.customCodeList.map(x => (ctName+'-'+x.des+'-'+x.ctKey)).join(',')
       this.customDictDialogVisible = false
     },
 
@@ -549,9 +570,16 @@ export default {
       this.saveShowListToVarInfoList()
       // 主键variable
       const variable = this.showList[showIndex].variable
+      let domain
+      // 如果是自定义变量，应该在SUPP域中删除
+      if(this.showList[showIndex].coreDegree == '自定义'){
+        domain = 'SUPP' + this.domain
+      } else{
+        domain = this.domain
+      }
       const param = {
         "projectId": this.projectId,
-        "domain": this.domain,
+        "domain": domain,
         "variable": variable
       }
       // 调用接口删除变量，
