@@ -529,7 +529,7 @@ export default {
       this.modifyDictDialogVisible = true
     },
     saveDictStandardCt () {
-      this.showList[this.showIndexInModifyDict].ctCode = this.tmpCodeList.filter(x => x.useFlag).map(x => (x.code+'-'+x.app_name+'-'+x.data_meaning)).join(',')
+      this.showList[this.showIndexInModifyDict].ctCode = this.tmpCodeList.filter(x => x.useFlag).map(x => (x.code+'-'+x.app_name+'-'+x.data_meaning)).join(';')
       this.modifyDictDialogVisible = false
     },
     async triggerCustomDict (showIndex) {
@@ -562,7 +562,7 @@ export default {
         }
       })
       this.$api.varSetting.saveCustomCT(this.customCodeList).catch(err => { })
-      this.showList[this.showIndexInCustomDict].ctCode = this.customCodeList.map(x => (ctName+'-'+x.des+'-'+x.ctKey)).join(',')
+      this.showList[this.showIndexInCustomDict].ctCode = this.customCodeList.map(x => (ctName+'-'+x.description+'-'+x.ctKey)).join(';')
       this.customDictDialogVisible = false
     },
 
@@ -570,13 +570,8 @@ export default {
       this.saveShowListToVarInfoList()
       // 主键variable
       const variable = this.showList[showIndex].variable
-      let domain
-      // 如果是自定义变量，应该在SUPP域中删除
-      if(this.showList[showIndex].coreDegree == '自定义'){
-        domain = 'SUPP' + this.domain
-      } else{
-        domain = this.domain
-      }
+      // 变量本身的domain
+      const domain = this.showList[showIndex].domain
       const param = {
         "projectId": this.projectId,
         "domain": domain,
