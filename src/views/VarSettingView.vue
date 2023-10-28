@@ -529,7 +529,7 @@ export default {
       this.modifyDictDialogVisible = true
     },
     saveDictStandardCt () {
-      this.showList[this.showIndexInModifyDict].ctCode = this.tmpCodeList.filter(x => x.useFlag).map(x => (x.code+'-'+x.app_name+'-'+x.data_meaning)).join(';')
+      this.showList[this.showIndexInModifyDict].ctCode = this.tmpCodeList.filter(x => x.useFlag).map(x => (x.code+'-'+x.value_cn+'-'+x.app_name+'-'+x.data_meaning)).join(';')
       this.modifyDictDialogVisible = false
     },
     async triggerCustomDict (showIndex) {

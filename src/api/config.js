@@ -22,6 +22,24 @@ const config = {
     url: '/config/save',
     method: 'post',
     data
+  }),
+
+  // 查询所有SDTM-IG
+  querySdtmig: () => axios({
+    url: '/config/querySdtmig',
+    method: 'post',
+  }),
+
+  // 查询所有queryCtVersion
+  querySdtmig: () => axios({
+    url: '/config/queryCtVersion',
+    method: 'post',
+  }),
+
+  // 查询所有queryDefineVersion
+  queryDefineVersion: () => axios({
+    url: '/config/queryDefineVersion',
+    method: 'post',
   })
 
 }

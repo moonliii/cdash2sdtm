@@ -22,7 +22,10 @@
     </el-form-item>
 
     <el-form-item label="SDTMIG" prop="sdtmig">
-      <el-input v-model="configData.sdtmig"></el-input>
+      <el-select v-model="configData.sdtmig" clearable placeholder="请选择SDTMIG">
+        <el-option v-for="item in sdtmigList" :key="item" :label="item" :value="item">
+        </el-option>
+      </el-select>
     </el-form-item>
 
     <el-form-item label="SDTM文件说明" prop="sdtmDescription">
@@ -30,7 +33,10 @@
     </el-form-item>
 
     <el-form-item label="DefineXML" prop="defineXML">
-      <el-input v-model="configData.defineXML"></el-input>
+      <el-select v-model="configData.defineXML" clearable placeholder="请选择defineXML">
+        <el-option v-for="item in defineXMLList" :key="item" :label="item" :value="item">
+        </el-option>
+      </el-select>
     </el-form-item>
 
     <el-form-item label="DefineXML文件说明" prop="defineXMLDescription">
@@ -66,8 +72,12 @@
       </el-upload>
     </el-form-item>
 
+
     <el-form-item label="受控术语版本" prop="ctVersion">
-      <el-input v-model="configData.ctVersion"></el-input>
+      <el-select v-model="configData.ctVersion" clearable placeholder="请选择受控术语版本">
+        <el-option v-for="item in ctVersionList" :key="item" :label="item" :value="item">
+        </el-option>
+      </el-select>
     </el-form-item>
 
     <el-form-item label="受控术语文件说明" prop="ctDescription">
@@ -101,6 +111,9 @@ export default {
         ctVersion: '',
         ctDescription: ''
       },
+      sdtmigList:[],
+      defineXMLList:[],
+      ctVersionList:[],
       // 上传的文件(展示)
       aCRFFileList: [],
       datasetFileList: [],
@@ -237,12 +250,19 @@ export default {
       return valid
     },
 
-    initForm () {
+    async initForm () {
       // default input
       this.configData.filePurpose = '递交'
+      let res
+      res = await this.$api.config.querySdtmig()
+      this.sdtmigList = res.data.data
+      res = await this.$api.config.queryDefineVersion()
+      this.defineXMLList = res.data.data
+      res = await this.$api.config.queryCtVersion()
+      this.ctVersionList = res.data.data
     },
 
-    restoreForm () {
+    async restoreForm () {
       const configData = sessionStorage.getItem('configData')
       const aCRFFileList = sessionStorage.getItem('aCRFFileList')
       const datasetFileList = sessionStorage.getItem('datasetFileList')
@@ -253,14 +273,14 @@ export default {
         this.aCRFFileList = JSON.parse(aCRFFileList)
         this.datasetFileList = JSON.parse(datasetFileList)
       } else {
-        this.initForm()
+        await this.initForm()
       }
     }
   },
 
-  created () {
+  async created () {
     console.log('created')
-    this.restoreForm()
+    await this.restoreForm()
   }
 }
 </script>
