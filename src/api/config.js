@@ -31,7 +31,7 @@ const config = {
   }),
 
   // 查询所有queryCtVersion
-  querySdtmig: () => axios({
+  queryCtVersion: () => axios({
     url: '/config/queryCtVersion',
     method: 'post',
   }),
