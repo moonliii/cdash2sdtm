@@ -243,6 +243,9 @@ export default {
         sessionStorage.setItem('isAddAcrf', this.isAddAcrf)
         sessionStorage.setItem('isAddDataset', this.isAddDataset)
 
+        // 原始数据集url
+        sessionStorage.setItem('dataset', this.configData.dataset)
+
 
       } else {
         that.$message.error("请完整填写信息！")
