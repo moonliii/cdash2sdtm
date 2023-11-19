@@ -64,6 +64,20 @@
               <span v-if="!scope.row.isAddVlm">{{ scope.row.coreDegree }}</span>
             </template>
           </el-table-column>
+          <el-table-column label="是否衍生" width="120">
+            <template slot-scope="scope">
+              <span v-if="!scope.row.isAddVlm">
+                <el-switch v-model="scope.row.derivedFlag" />
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="衍生方法" width="240">
+            <template slot-scope="scope">
+              <span v-if="!scope.row.isAddVlm">
+                <el-input v-model="scope.row.derivedMethod"></el-input>
+              </span>
+            </template>
+          </el-table-column>
           <el-table-column label="变量名称" width="120">
             <template slot-scope="scope">
               <span v-if="!scope.row.isAddVlm">
