@@ -258,11 +258,11 @@ export default {
       this.configData.filePurpose = '递交'
       let res
       res = await this.$api.config.querySdtmig()
-      this.sdtmigList = res.data
+      this.sdtmigList = res.data.data
       res = await this.$api.config.queryDefineVersion()
-      this.defineXMLList = res.data
+      this.defineXMLList = res.data.data
       res = await this.$api.config.queryCtVersion()
-      this.ctVersionList = res.data
+      this.ctVersionList = res.data.data
     },
 
     async restoreForm () {
