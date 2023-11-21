@@ -33,7 +33,11 @@ export default {
       this.$api.define.downloadSdtm({
         projectId: projectId,
         path:path
-      }).then(res=>{})
+      }).then(res => {
+        const url = res.data
+        // 下载到本地
+        window.location.href = url
+      })
     }
   }
 }
